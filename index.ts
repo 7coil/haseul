@@ -58,7 +58,7 @@ class Router {
     
     if (nestedRoutes) {
       nestedRoutes.settings = Object.assign({}, this.settings, {
-        prefix: ''
+        prefix: ' '
       });
     }
 
