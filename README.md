@@ -9,18 +9,18 @@ yarn add haseul
 
 ## Usage
 
-### new Haseul();
+### new HaSeul();
 Creates a new router.
 
 ```js
 // dumb dumb require.js imports
-const Haseul = require('haseul');
+const HaSeul = require('haseul');
 
 // New fancy imports
-import Haseul from 'haseul';
+import HaSeul from 'haseul';
 
 // Create a new Haseul.
-const router = new Haseul();
+const router = new HaSeul();
 ```
 
 ### router.route(content, message)
@@ -65,11 +65,11 @@ next    | A function which executes the next available command. Use `next(error)
 ## Example with Eris
 ```js
 import Eris from 'eris';
-import Haseul from 'haseul';
+import HaSeul from 'haseul';
 
 const bot = new Eris('token')
-const router = new Haseul();
-const deeperRouter = new Haseul();
+const router = new HaSeul();
+const deeperRouter = new HaSeul();
 
 bot.on('messageCreate', (message) => {
   router.route(message.content, message);
@@ -96,6 +96,11 @@ deeperRouter
 ```
 
 ![vivibanana](.github/vivibanana.png)
+
+## Links
+- [npm](https://www.npmjs.com/package/haseul)
+- [github](https://github.com/botsto/haseul)
+- [ViVi](https://github.com/botsto/vivi)
 
 ## Notes
 - [You may be interested in this music video](https://www.youtube.com/watch?v=6a4BWpBJppI)
