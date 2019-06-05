@@ -8,12 +8,16 @@ interface request {
 class Router {
   private routes: {
     type: string,
-    url: string,
+    url: string | null,
     nestedRoutes?: Router,
     callback?: any
   }[];
 
-  private settings: object;
+  private settings: {
+    prefix?: string,
+    'json spaces'?: string,
+    [key: string]: any
+  };
 
   constructor() {
     this.routes = [];
@@ -22,55 +26,74 @@ class Router {
     };
   }
 
-  set(option, value) {
+  set(option: string, value: any) {
     this.settings[option] = value;
     return this;
   }
 
-  get(option) {
+  get(option: string) {
     return this.settings[option]
   }
 
-  error(...props: [(Function | Router)] | [string, (Function | Router)]): Router {
-    return this.createRoute('error', ...props);
+  error(nestedRoutes: Router): Router;
+  error(callback: Function): Router;
+  error(url: string, callback: Function): Router;
+  error(url: string, nestedRoutes: Router): Router;
+  error(x: any, y?: any): Router {
+    return this.createRoute('error', x, y);
   }
 
-  command(...props: [(Function | Router)] | [string, (Function | Router)]): Router {
-    return this.createRoute('command', ...props);
+  command(nestedRoutes: Router): Router;
+  command(callback: Function): Router;
+  command(url: string, callback: Function): Router;
+  command(url: string, nestedRoutes: Router): Router;
+  command(x: any, y?: any): Router {
+    return this.createRoute('command', x, y);
   }
 
-  createRoute(routeType: string, ...props: [(Function | Router)] | [string, (Function | Router)]): Router {
-    let url: string;
-    let callback: Function;
-    let nestedRoutes: Router;
-  
-    if (props[0] instanceof Router) {
-      nestedRoutes = props[0];
-    } else if (props[1] instanceof Router && typeof props[0] === 'string') {
-      url = props[0];
-      nestedRoutes = props[1];
-    } else if (typeof props[0] === 'function') {
-      callback = props[0];
-    } else if (typeof props[0] === 'string' && typeof props[1] === 'function') {
-      url = props[0];
-      callback = props[1];
-    }
-    
-    if (nestedRoutes) {
-      nestedRoutes.settings = Object.assign({}, this.settings, {
+  createRoute(routeType: string, nestedRoutes: Router): Router;
+  createRoute(routeType: string, callback: Function): Router;
+  createRoute(routeType: string, url: string, callback: Function): Router;
+  createRoute(routeType: string, url: string, nestedRoutes: Router): Router;
+  createRoute(routeType: any, x: any, y?: any): Router {
+    if (x instanceof Router) {
+      x.settings = Object.assign({}, this.settings, {
         prefix: ' '
       });
-    }
 
-    this.routes.push({
-      type: routeType,
-      nestedRoutes, url, callback
-    })
+      this.routes.push({
+        type: routeType,
+        nestedRoutes: x,
+        url: null
+      })
+    } else if (typeof x === 'string' && y instanceof Router) {
+      y.settings = Object.assign({}, this.settings, {
+        prefix: ' '
+      });
+
+      this.routes.push({
+        type: routeType,
+        nestedRoutes: y,
+        url: x,
+      })
+    } else if (typeof x === 'function') {
+      this.routes.push({
+        type: routeType,
+        callback: x,
+        url: null
+      })
+    } else if (typeof x === 'string' && typeof y === 'function') {
+      this.routes.push({
+        type: routeType,
+        callback: y,
+        url: x
+      })
+    }
 
     return this;
   }
 
-  route(content: string, message: any, existingReq?: request, incrementor?: number) {
+  route(content: string, message: any, existingReq?: request, incrementor?: number): void {
     let req: request;
     let i = 0;
 
@@ -95,10 +118,10 @@ class Router {
     if (!req.err && route.type === 'error') return this.route(content, message, req, i);
     if (content.startsWith(this.get('prefix') + route.url) || route.url === null) {
       if (route.callback) {
-        return route.callback({
+        route.callback({
           message,
           err: req.err,
-          next: (err) => {
+          next: (err: Error) => {
             if (err) req.err = err;
             return this.route(content, message, req, i);
           }
@@ -106,9 +129,11 @@ class Router {
       }
 
       if (route.nestedRoutes) {
-        const newContent = content.substring(this.get('prefix').length + route.url.length);
-        return route.nestedRoutes.route(newContent, message, req);
+        const newContent = content.substring(this.get('prefix').length + (typeof route.url === 'string' ? route.url.length : 0));
+        route.nestedRoutes.route(newContent, message, req);
       }
+
+      return;
     }
     return this.route(content, message, req, i);
   }
