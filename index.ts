@@ -37,6 +37,7 @@ class Router {
 
   set(option: 'prefix', value: string): Router
   set(option: 'case sensitive routing', value: boolean): Router
+  set(option: 'json spaces', value: string | number): Router
   set(option: string, value: any): Router {
     this.settings[option] = value;
     return this;
@@ -44,6 +45,7 @@ class Router {
 
   get(option: 'prefix'): string
   get(option: 'case sensitive routing'): boolean
+  get(option: 'json spaces'): string | number
   get(option: string) {
     return this.settings[option]
   }
