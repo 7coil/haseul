@@ -9,133 +9,176 @@ class Router {
   private routes: {
     type: string,
     url: string | null,
-    nestedRoutes?: Router,
-    callback?: any
+    middlewares: (Router | Function)[]
   }[];
 
   private settings: {
     prefix?: string,
-    'json spaces'?: string,
+    'json spaces'?: string | number,
+    'case sensitive routing'?: boolean,
     [key: string]: any
   };
 
   constructor() {
     this.routes = [];
     this.settings = {
-      prefix: ''
+      prefix: '',
+      'json spaces': 2,
+      'case sensitive routing': false
     };
   }
 
-  set(option: string, value: any) {
+  contentMatches(content: string, route: string): boolean {
+    if (this.get('case sensitive routing')) {
+      return content.startsWith((this.get('prefix') + route).trim())
+    }
+    return content.toLowerCase().startsWith((this.get('prefix') + route).trim().toLowerCase())
+  }
+
+  set(option: 'prefix', value: string): Router
+  set(option: 'case sensitive routing', value: boolean): Router
+  set(option: string, value: any): Router {
     this.settings[option] = value;
     return this;
   }
 
+  get(option: 'prefix'): string
+  get(option: 'case sensitive routing'): boolean
   get(option: string) {
     return this.settings[option]
   }
 
-  error(nestedRoutes: Router): Router;
-  error(callback: Function): Router;
-  error(url: string, callback: Function): Router;
-  error(url: string, nestedRoutes: Router): Router;
-  error(x: any, y?: any): Router {
-    return this.createRoute('error', x, y);
+  error(firstMiddleware: Router | Function, ...middleware: (Router | Function)[]): Router;
+  error(url: string, ...middleware: (Router | Function)[]): Router;
+  error(x: any, ...y: (Router | Function)[]): Router {
+    return this.createRoute('error', x, ...y);
   }
 
-  command(nestedRoutes: Router): Router;
-  command(callback: Function): Router;
-  command(url: string, callback: Function): Router;
-  command(url: string, nestedRoutes: Router): Router;
-  command(x: any, y?: any): Router {
-    return this.createRoute('command', x, y);
+  command(firstMiddleware: Router | Function, ...middleware: (Router | Function)[]): Router;
+  command(url: string, ...middleware: (Router | Function)[]): Router;
+  command(x: any, ...y: (Router | Function)[]): Router {
+    return this.createRoute('command', x, ...y);
   }
 
-  createRoute(routeType: string, nestedRoutes: Router): Router;
-  createRoute(routeType: string, callback: Function): Router;
-  createRoute(routeType: string, url: string, callback: Function): Router;
-  createRoute(routeType: string, url: string, nestedRoutes: Router): Router;
-  createRoute(routeType: any, x: any, y?: any): Router {
-    if (x instanceof Router) {
-      x.settings = Object.assign({}, this.settings, {
-        prefix: ' '
-      });
-
-      this.routes.push({
-        type: routeType,
-        nestedRoutes: x,
-        url: null
-      })
-    } else if (typeof x === 'string' && y instanceof Router) {
-      y.settings = Object.assign({}, this.settings, {
-        prefix: ' '
-      });
-
-      this.routes.push({
-        type: routeType,
-        nestedRoutes: y,
-        url: x,
-      })
-    } else if (typeof x === 'function') {
-      this.routes.push({
-        type: routeType,
-        callback: x,
-        url: null
-      })
-    } else if (typeof x === 'string' && typeof y === 'function') {
-      this.routes.push({
-        type: routeType,
-        callback: y,
-        url: x
-      })
+  createRoute(routeType: string, firstMiddleware: Router | Function, ...middleware: (Router | Function)[]): Router;
+  createRoute(routeType: string, url: string, ...middleware: (Router | Function)[]): Router;
+  createRoute(routeType: string, x: any, ...y: (Router | Function)[]): Router {
+    const middlewares: (Router | Function)[] = [];
+    let url = null;
+    
+    if (typeof x === 'function') {
+      middlewares.push(x);
+    } else if (x instanceof Router) {
+      middlewares.push(x);
+    } else if (typeof x === 'string') {
+      url = x;
     }
 
+    middlewares.push(...y);
+
+    this.routes.push({
+      type: routeType,
+      url,
+      middlewares: middlewares
+        .map((middleware) => {
+          if (middleware instanceof Router) {
+            middleware.set('prefix', ' ')
+          }
+
+          return middleware
+        })
+    });
     return this;
   }
 
-  route(content: string, message: any, existingReq?: request, incrementor?: number): void {
-    let req: request;
-    let i = 0;
+  route(content: string, message: any, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
+    return new Promise((resolve) => {
+      let req: request;
+      let i = 0;
+      let j = 0;
 
-    if (existingReq) {
-      req = existingReq;
-    } else {
-      req = {
-        originalContent: content,
-        originalUrl: content,
-      }
-    }
-
-    if (incrementor) {
-      i = incrementor;
-    }
-
-    const route = this.routes[i];
-    i++;
-
-    if (!route) return;
-    if (req.err && route.type !== 'error') return this.route(content, message, req, i);
-    if (!req.err && route.type === 'error') return this.route(content, message, req, i);
-    if (content.startsWith(this.get('prefix') + route.url) || route.url === null) {
-      if (route.callback) {
-        route.callback({
-          message,
-          err: req.err,
-          next: (err: Error) => {
-            if (err) req.err = err;
-            return this.route(content, message, req, i);
-          }
-        })
+      if (existingReq) {
+        req = existingReq;
+      } else {
+        req = {
+          originalContent: content,
+          originalUrl: content,
+        }
       }
 
-      if (route.nestedRoutes) {
-        const newContent = content.substring(this.get('prefix').length + (typeof route.url === 'string' ? route.url.length : 0));
-        route.nestedRoutes.route(newContent, message, req);
+      if (routeNumber) {
+        i = routeNumber;
       }
 
-      return;
-    }
-    return this.route(content, message, req, i);
+      if (middlewareNumber) {
+        j = middlewareNumber;
+      }
+
+      const route = this.routes[i];
+
+      // If a route was not found, we've ran out of routes.
+      if (!route) resolve();
+
+      // If this route is not an error handler, go to the next route
+      if (req.err && route.type !== 'error') {
+        resolve(this.route(content, message, req, i + 1, 0));
+        return;
+      }
+      
+      // If this route is an error handler, but there's no error, go to the next route
+      if (!req.err && route.type === 'error') {
+        resolve(this.route(content, message, req, i + 1, 0));
+        return;
+      }
+
+      // If the route URL is matched, try to execute the middleware
+      if (route.url === null || this.contentMatches(content, route.url)) {
+        const middleware = route.middlewares[j];
+        const newContent = content.trim().substring(this.get('prefix').length + (typeof route.url === 'string' ? route.url.length : 0)).trim();
+
+        if (typeof middleware === 'function') {
+          middleware({
+            message,
+            err: req.err,
+            content: newContent,
+            next: (err?: Error): void => {
+              if (err) {
+                req.err = err;
+
+                // If this is an error router, go to deeper middleware
+                if (route.type === 'error') {
+                  resolve(this.route(content, message, req, i, j + 1))
+                } else {
+                  // Otherwise, go to the next route in search for an error router.
+                  resolve(this.route(content, message, req, i + 1, 0))
+                }
+              } else {
+                // If this is an error router, skip this route
+                if (route.type === 'error') {
+                  resolve(this.route(content, message, req, i + 1, 0))
+                } else {
+                  // Otherwise, go to deeper middleware
+                  resolve(this.route(content, message, req, i, j + 1))
+                }
+              }
+            }
+          })
+        } else if (middleware instanceof Router) {
+          // Do the middleware.
+          middleware.route(newContent, message, req)
+            .then(() => {
+              // After routing, go to the next middleware
+              resolve(this.route(content, message, req, i, j + 1))
+            })
+        } else {
+          // There is no more middleware. Go to the next router.
+          resolve(this.route(content, message, req, i + 1, 0))
+        }
+      } else {
+        // The route didn't match. Go to the next router.
+        resolve(this.route(content, message, req, i + 1, 0))
+      }
+    });
   }
 }
 
