@@ -129,10 +129,10 @@ Obtaining the content of messages
 Case sensitivity with `router.set('case sensitive routing', true)`  
 ![yves compared to Yves](.github/yves.png)
 
-Usage of `next()` within middleware
+Usage of `next()` within middleware  
 ![next()](.github/next.png)
 
-Subcommands using nested routers
+Subcommands using nested routers  
 ![heejintears](.github/heejintears.png)
 
 ## Links
