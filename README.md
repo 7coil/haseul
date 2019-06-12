@@ -13,10 +13,10 @@ yarn add haseul
 Creates a new router.
 
 ```js
-// Untested - Create an issue if require.js doesn't work
-const Haseul = require('haseul');
+// Old `require()` style imports
+const Haseul = require('haseul').default;
 
-// New fancy imports
+// New ES6 imports
 import Haseul from 'haseul';
 
 // Create a new Haseul.
