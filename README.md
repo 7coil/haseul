@@ -137,7 +137,6 @@ Subcommands using nested routers
 
 ## Links
 - [npm](https://www.npmjs.com/package/haseul)
-- [github](https://github.com/botsto/haseul)
 - [ViVi](https://github.com/botsto/vivi)
 
 ## Notes
