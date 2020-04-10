@@ -1,4 +1,4 @@
-# Haseul
+# HaSeul
 Express style bot framework
 
 ## Installation

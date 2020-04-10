@@ -1,6 +1,6 @@
 {
   "name": "haseul",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,8 @@
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",

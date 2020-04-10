@@ -5,11 +5,11 @@ interface request {
   params?: object
 }
 
-class Router {
+class Router<T = any> {
   private routes: {
     type: string,
     url: string | null,
-    middlewares: (Router | Function)[]
+    middlewares: (Router<T> | Function)[]
   }[];
 
   private settings: {
@@ -35,10 +35,10 @@ class Router {
     return content.toLowerCase().startsWith((this.get('prefix') + route).trim().toLowerCase())
   }
 
-  set(option: 'prefix', value: string): Router
-  set(option: 'case sensitive routing', value: boolean): Router
-  set(option: 'json spaces', value: string | number): Router
-  set(option: string, value: any): Router {
+  set(option: 'prefix', value: string): Router<T>
+  set(option: 'case sensitive routing', value: boolean): Router<T>
+  set(option: 'json spaces', value: string | number): Router<T>
+  set(option: string, value: any): Router<T> {
     this.settings[option] = value;
     return this;
   }
@@ -50,22 +50,22 @@ class Router {
     return this.settings[option]
   }
 
-  error(firstMiddleware: Router | Function, ...middleware: (Router | Function)[]): Router;
-  error(url: string, ...middleware: (Router | Function)[]): Router;
-  error(x: any, ...y: (Router | Function)[]): Router {
+  error(firstMiddleware: Router<T> | Function, ...middleware: (Router<T> | Function)[]): Router<T>;
+  error(url: string, ...middleware: (Router<T> | Function)[]): Router<T>;
+  error(x: any, ...y: (Router<T> | Function)[]): Router<T> {
     return this.createRoute('error', x, ...y);
   }
 
-  command(firstMiddleware: Router | Function, ...middleware: (Router | Function)[]): Router;
-  command(url: string, ...middleware: (Router | Function)[]): Router;
-  command(x: any, ...y: (Router | Function)[]): Router {
+  command(firstMiddleware: Router<T> | Function, ...middleware: (Router<T> | Function)[]): Router<T>;
+  command(url: string, ...middleware: (Router<T> | Function)[]): Router<T>;
+  command(x: any, ...y: (Router<T> | Function)[]): Router<T> {
     return this.createRoute('command', x, ...y);
   }
 
-  createRoute(routeType: string, firstMiddleware: Router | Function, ...middleware: (Router | Function)[]): Router;
-  createRoute(routeType: string, url: string, ...middleware: (Router | Function)[]): Router;
-  createRoute(routeType: string, x: any, ...y: (Router | Function)[]): Router {
-    const middlewares: (Router | Function)[] = [];
+  createRoute(routeType: string, firstMiddleware: Router<T> | Function, ...middleware: (Router<T> | Function)[]): Router<T>;
+  createRoute(routeType: string, url: string, ...middleware: (Router<T> | Function)[]): Router<T>;
+  createRoute(routeType: string, x: any, ...y: (Router<T> | Function)[]): Router<T> {
+    const middlewares: (Router<T> | Function)[] = [];
     let url = null;
     
     if (typeof x === 'function') {
@@ -93,7 +93,7 @@ class Router {
     return this;
   }
 
-  route(content: string, message: any, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
+  route(content: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
     return new Promise((resolve) => {
       let req: request;
       let i = 0;
