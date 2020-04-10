@@ -5,11 +5,23 @@ interface request {
   params?: object
 }
 
+type HaSeulCallbackFunction<T> = ({
+  message,
+  err,
+  content,
+  next
+}: {
+  message: T,
+  err: Error | undefined,
+  content: string,
+  next: (err?: Error) => void
+}) => void
+
 class Router<T = any> {
   private routes: {
     type: string,
     url: string | null,
-    middlewares: (Router<T> | Function)[]
+    middlewares: (Router<T> | HaSeulCallbackFunction<T>)[]
   }[];
 
   private settings: {
@@ -50,22 +62,22 @@ class Router<T = any> {
     return this.settings[option]
   }
 
-  error(firstMiddleware: Router<T> | Function, ...middleware: (Router<T> | Function)[]): Router<T>;
-  error(url: string, ...middleware: (Router<T> | Function)[]): Router<T>;
-  error(x: any, ...y: (Router<T> | Function)[]): Router<T> {
+  error(firstMiddleware: Router<T> | HaSeulCallbackFunction<T>, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  error(url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  error(x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
     return this.createRoute('error', x, ...y);
   }
 
-  command(firstMiddleware: Router<T> | Function, ...middleware: (Router<T> | Function)[]): Router<T>;
-  command(url: string, ...middleware: (Router<T> | Function)[]): Router<T>;
-  command(x: any, ...y: (Router<T> | Function)[]): Router<T> {
+  command(firstMiddleware: Router<T> | HaSeulCallbackFunction<T>, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  command(url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  command(x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
     return this.createRoute('command', x, ...y);
   }
 
-  createRoute(routeType: string, firstMiddleware: Router<T> | Function, ...middleware: (Router<T> | Function)[]): Router<T>;
-  createRoute(routeType: string, url: string, ...middleware: (Router<T> | Function)[]): Router<T>;
-  createRoute(routeType: string, x: any, ...y: (Router<T> | Function)[]): Router<T> {
-    const middlewares: (Router<T> | Function)[] = [];
+  createRoute(routeType: string, firstMiddleware: Router<T> | HaSeulCallbackFunction<T>, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  createRoute(routeType: string, url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  createRoute(routeType: string, x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
+    const middlewares: (Router<T> | HaSeulCallbackFunction<T>)[] = [];
     let url = null;
     
     if (typeof x === 'function') {
