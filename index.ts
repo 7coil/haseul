@@ -1,9 +1,14 @@
+interface HaSeulLocals {
+  [key: string]: any;
+  [key: number]: any;
+}
+
 interface request {
   err?: Error,
   originalContent: string,
   originalUrl: string,
   params?: object,
-  locals: object,
+  locals: HaSeulLocals,
 }
 
 type HaSeulCallbackFunction<T> = ({
