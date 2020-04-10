@@ -2,19 +2,22 @@ interface request {
   err?: Error,
   originalContent: string,
   originalUrl: string,
-  params?: object
+  params?: object,
+  locals: object,
 }
 
 type HaSeulCallbackFunction<T> = ({
   message,
   err,
   content,
-  next
+  next,
+  req
 }: {
   message: T,
   err: Error | undefined,
   content: string,
-  next: (err?: Error) => void
+  next: (err?: Error) => void,
+  req: request,
 }) => void
 
 class Router<T = any> {
@@ -117,6 +120,7 @@ class Router<T = any> {
         req = {
           originalContent: content,
           originalUrl: content,
+          locals: {},
         }
       }
 
@@ -153,6 +157,7 @@ class Router<T = any> {
         if (typeof middleware === 'function') {
           middleware({
             message,
+            req,
             err: req.err,
             content: newContent,
             next: (err?: Error): void => {
