@@ -48,11 +48,23 @@ class Router<T = any> {
     };
   }
 
-  contentMatches(content: string, route: string): boolean {
-    if (this.get('case sensitive routing')) {
-      return content.startsWith((this.get('prefix') + route).trim())
-    }
-    return content.toLowerCase().startsWith((this.get('prefix') + route).trim().toLowerCase())
+  getContentIfMatched(content: string, route: string | null): string | void {
+    const contentToCheck = this.get('case sensitive routing') ? content.trim() : content.toLowerCase().trim();
+    const prefixToCheck = this.get('case sensitive routing') ? this.get('prefix') : this.get('prefix').toLowerCase();
+
+    // If the content doesn't start with the prefix, ignore.
+    if (prefixToCheck.length && !contentToCheck.startsWith(prefixToCheck)) return;
+    const contentWithoutPrefix = content.trim().substring(prefixToCheck.length).trim();
+    const contentWithoutPrefixToCheck = contentToCheck.substring(prefixToCheck.length).trim();
+
+    // If a route isn't specified, just send the content without the prefix.
+    if (route === null) return contentWithoutPrefix;
+
+    // If the content doesn't start with the route, ignore.
+    const routeToCheck = this.get('case sensitive routing') ? route.trim() : route.toLowerCase().trim();
+    if (!contentWithoutPrefixToCheck.startsWith(routeToCheck)) return;
+
+    return contentWithoutPrefix.substring(routeToCheck.length).trim();
   }
 
   set(option: 'prefix', value: string): Router<T>
@@ -104,7 +116,7 @@ class Router<T = any> {
       middlewares: middlewares
         .map((middleware) => {
           if (middleware instanceof Router) {
-            middleware.set('prefix', ' ')
+            middleware.set('prefix', '')
           }
 
           return middleware
@@ -113,7 +125,7 @@ class Router<T = any> {
     return this;
   }
 
-  route(content: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
+  route(userInput: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
     return new Promise((resolve) => {
       let req: request;
       let i = 0;
@@ -123,8 +135,8 @@ class Router<T = any> {
         req = existingReq;
       } else {
         req = {
-          originalContent: content,
-          originalUrl: content,
+          originalContent: userInput,
+          originalUrl: userInput,
           locals: {},
         }
       }
@@ -144,63 +156,64 @@ class Router<T = any> {
 
       // If this route is not an error handler, go to the next route
       if (req.err && route.type !== 'error') {
-        resolve(this.route(content, message, req, i + 1, 0));
+        resolve(this.route(userInput, message, req, i + 1, 0));
         return;
       }
       
       // If this route is an error handler, but there's no error, go to the next route
       if (!req.err && route.type === 'error') {
-        resolve(this.route(content, message, req, i + 1, 0));
+        resolve(this.route(userInput, message, req, i + 1, 0));
         return;
       }
 
+      const content = this.getContentIfMatched(userInput, route.url)
+      
       // If the route URL is matched, try to execute the middleware
-      if (route.url === null || this.contentMatches(content, route.url)) {
+      if (content) {
         const middleware = route.middlewares[j];
-        const newContent = content.trim().substring(this.get('prefix').length + (typeof route.url === 'string' ? route.url.length : 0)).trim();
-
+        
         if (typeof middleware === 'function') {
           middleware({
             message,
             req,
             err: req.err,
-            content: newContent,
+            content,
             next: (err?: Error): void => {
               if (err) {
                 req.err = err;
 
                 // If this is an error router, go to deeper middleware
                 if (route.type === 'error') {
-                  resolve(this.route(content, message, req, i, j + 1))
+                  resolve(this.route(userInput, message, req, i, j + 1))
                 } else {
                   // Otherwise, go to the next route in search for an error router.
-                  resolve(this.route(content, message, req, i + 1, 0))
+                  resolve(this.route(userInput, message, req, i + 1, 0))
                 }
               } else {
                 // If this is an error router, skip this route
                 if (route.type === 'error') {
-                  resolve(this.route(content, message, req, i + 1, 0))
+                  resolve(this.route(userInput, message, req, i + 1, 0))
                 } else {
                   // Otherwise, go to deeper middleware
-                  resolve(this.route(content, message, req, i, j + 1))
+                  resolve(this.route(userInput, message, req, i, j + 1))
                 }
               }
             }
           })
         } else if (middleware instanceof Router) {
           // Do the middleware.
-          middleware.route(newContent, message, req)
+          middleware.route(content, message, req)
             .then(() => {
               // After routing, go to the next middleware
-              resolve(this.route(content, message, req, i, j + 1))
+              resolve(this.route(userInput, message, req, i, j + 1))
             })
         } else {
           // There is no more middleware. Go to the next router.
-          resolve(this.route(content, message, req, i + 1, 0))
+          resolve(this.route(userInput, message, req, i + 1, 0))
         }
       } else {
         // The route didn't match. Go to the next router.
-        resolve(this.route(content, message, req, i + 1, 0))
+        resolve(this.route(userInput, message, req, i + 1, 0))
       }
     });
   }
