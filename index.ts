@@ -167,9 +167,9 @@ class Router<T = any> {
       }
 
       const content = this.getContentIfMatched(userInput, route.url)
-      
+
       // If the route URL is matched, try to execute the middleware
-      if (content) {
+      if (typeof content === 'string') {
         const middleware = route.middlewares[j];
         
         if (typeof middleware === 'function') {
