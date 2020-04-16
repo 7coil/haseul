@@ -38,9 +38,10 @@ router2
     req.locals.sqlConnection = 'Example SQL Connection';
     next();
   })
-  .command('test', ({message}) => {
-    console.log('Received a test message!')
+  .command('test', ({ content }) => {
+    console.log('Received a test message!', `"${content}"`)
   })
 
-router2.route('discordmailtest Test')
+router2.route('discordmailtest Test', {weird: 'object'})
 router2.route('discordmailtest')
+router2.route('discordmailtest a')
