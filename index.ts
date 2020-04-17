@@ -1,3 +1,4 @@
+
 interface HaSeulLocals {
   [key: string]: any;
   [key: number]: any;
@@ -48,6 +49,11 @@ class Router<T = any> {
     };
   }
 
+  /**
+   * Returns the content of a message, if the prefix (and optional route) matches the user's message.
+   * @param content The message content that the user has provided
+   * @param route The route name that needs to be removed from the resulting content
+   */
   getContentIfMatched(content: string, route: string | null): string | void {
     const contentToCheck = this.get('case sensitive routing') ? content.trim() : content.toLowerCase().trim();
     const prefixToCheck = this.get('case sensitive routing') ? this.get('prefix') : this.get('prefix').toLowerCase();
@@ -67,34 +73,112 @@ class Router<T = any> {
     return contentWithoutPrefix.substring(routeToCheck.length).trim();
   }
 
+  /**
+   * Set the prefix of the router.
+   * @param option `prefix`
+   * @param value The prefix that the router should react to.
+   */
   set(option: 'prefix', value: string): Router<T>
+
+  /**
+   * Set the case sensitivity of routing.
+   * @param option `case sensitive routing`
+   * @param value Whether or not the router should be case sensitive or not.
+   */
   set(option: 'case sensitive routing', value: boolean): Router<T>
+
+  /**
+   * Set the white space that is used when converting an object to JSON.
+   * @param option `json spaces`
+   * @param value A number for the number of spaces to indent JSON objects by, or a string to use as the indenting character.
+   * @beta
+   */
   set(option: 'json spaces', value: string | number): Router<T>
+
+  /**
+   * Sets the value of `option` to `value`.
+   * You can store anything, but some options can configure the properties of the router.
+   * @param option The name of the option
+   * @param value The value that will be assigned to this option
+   */
   set(option: string, value: any): Router<T> {
     this.settings[option] = value;
     return this;
   }
 
+  /**
+   * Obtain the current prefix of the router.
+   * @param option `prefix`
+   */
   get(option: 'prefix'): string
+
+  /**
+   * Obtain whether or not the router is case sensitive or not.
+   * @param option `case sensitive routing`
+   */
   get(option: 'case sensitive routing'): boolean
+
+  /**
+   * Obtain the delimiter used to generate JSON objects.
+   * @param option `json spaces`
+   */
   get(option: 'json spaces'): string | number
+
+  /**
+   * Retrieve the value of a setting
+   * @param option The name of the option
+   */
   get(option: string) {
     return this.settings[option]
   }
 
-  error(firstMiddleware: Router<T> | HaSeulCallbackFunction<T>, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  /**
+   * Create an error handler which matches all commands
+   * @param middleware Middleware that will be executed in order whenever an error is caught by the router
+   */
+  error(...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+
+  /**
+   * Create an error handler which matches commands
+   * @param url The command that must be matched in order for this route to be executed
+   * @param middleware Middleware that will be executed in order whenever an error is caught by the router
+   */
   error(url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
   error(x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
     return this.createRoute('error', x, ...y);
   }
 
-  command(firstMiddleware: Router<T> | HaSeulCallbackFunction<T>, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  /**
+   * Create a handler which matches all commands
+   * @param middleware Middleware that will be executed in order whenever the route is executed
+   */
+  command(...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+
+  /**
+   * Create a handler which matches commands
+   * @param url The command that must be matched in order for this route to be executed
+   * @param middleware Middleware that will be executed in order whenever the route is executed
+   */
   command(url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
   command(x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
     return this.createRoute('command', x, ...y);
   }
 
-  createRoute(routeType: string, firstMiddleware: Router<T> | HaSeulCallbackFunction<T>, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  /**
+   * Create a handler which matches all commands
+   * @param routeType The type of route to create.
+   * @param middleware Middleware that will be executed in order whenever the route is executed
+   * @private
+   */
+  createRoute(routeType: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+
+  /**
+   * Create a handler which matches a command
+   * @param routeType The type of route to create.
+   * @param url The command that must be matched in order for this route to be executed
+   * @param middleware Middleware that will be executed in order whenever the route is executed
+   * @private
+   */
   createRoute(routeType: string, url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
   createRoute(routeType: string, x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
     const middlewares: (Router<T> | HaSeulCallbackFunction<T>)[] = [];
@@ -125,6 +209,22 @@ class Router<T = any> {
     return this;
   }
 
+  /**
+   * Pass a message into the router.
+   * @param userInput The content of a message from a user
+   * @param message The object from your client API that you would like to pass around to routers and middleware
+   */
+  route(userInput: string, message: T): Promise<void>;
+
+  /**
+   * Pass a message into the router, and define a starting point for where the router should look at.
+   * @param userInput The content of a message from a user
+   * @param message The object from your client API that you would like to pass around to routers and middleware
+   * @param existingReq The request object
+   * @param routeNumber The route number - Refers to the route to look at in the routes array.
+   * @param middlewareNumber The middleware number - Refers to the middleware array found in each route.
+   */
+  route(userInput: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void>;
   route(userInput: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
     return new Promise((resolve) => {
       let req: request;
