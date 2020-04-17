@@ -9,18 +9,18 @@ yarn add haseul
 
 ## Usage
 
-### new Haseul();
+### new HaSeul();
 Creates a new router.
 
 ```js
 // Old `require()` style imports
-const Haseul = require('haseul').default;
+const HaSeul = require('haseul').default;
 
 // New ES6 imports
-import Haseul from 'haseul';
+import HaSeul from 'haseul';
 
-// Create a new Haseul.
-const router = new Haseul();
+// Create a new HaSeul.
+const router = new HaSeul();
 ```
 
 ### router.route(content, message)
@@ -65,11 +65,11 @@ content | The part of the original message without the prefix and command.
 ## Example with Eris
 ```js
 import Eris from 'eris';
-import Haseul from 'haseul';
+import HaSeul from 'haseul';
 
 const bot = new Eris('token')
-const router = new Haseul();
-const deeperRouter = new Haseul();
+const router = new HaSeul();
+const deeperRouter = new HaSeul();
 
 bot.on('messageCreate', (message) => {
   router.route(message.content, message);
