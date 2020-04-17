@@ -12,25 +12,25 @@ interface request {
   locals: HaSeulLocals,
 }
 
-type HaSeulCallbackFunction<T> = ({
+type HaSeulCallbackFunction<Message> = ({
   message,
   err,
   content,
   next,
   req
 }: {
-  message: T,
+  message: Message,
   err: Error | undefined,
   content: string,
   next: (err?: Error) => void,
   req: request,
 }) => void
 
-class HaSeul<T = any> {
+class HaSeul<Message = any> {
   private routes: {
     type: string,
     url: string | null,
-    middlewares: (HaSeul<T> | HaSeulCallbackFunction<T>)[]
+    middlewares: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]
   }[];
 
   private settings: {
@@ -78,14 +78,14 @@ class HaSeul<T = any> {
    * @param option `prefix`
    * @param value The prefix that the router should react to.
    */
-  set(option: 'prefix', value: string): HaSeul<T>
+  set(option: 'prefix', value: string): HaSeul<Message>
 
   /**
    * Set the case sensitivity of routing.
    * @param option `case sensitive routing`
    * @param value Whether or not the router should be case sensitive or not.
    */
-  set(option: 'case sensitive routing', value: boolean): HaSeul<T>
+  set(option: 'case sensitive routing', value: boolean): HaSeul<Message>
 
   /**
    * Set the white space that is used when converting an object to JSON.
@@ -93,7 +93,7 @@ class HaSeul<T = any> {
    * @param value A number for the number of spaces to indent JSON objects by, or a string to use as the indenting character.
    * @beta
    */
-  set(option: 'json spaces', value: string | number): HaSeul<T>
+  set(option: 'json spaces', value: string | number): HaSeul<Message>
 
   /**
    * Sets the value of `option` to `value`.
@@ -101,7 +101,7 @@ class HaSeul<T = any> {
    * @param option The name of the option
    * @param value The value that will be assigned to this option
    */
-  set(option: string, value: any): HaSeul<T> {
+  set(option: string, value: any): HaSeul<Message> {
     this.settings[option] = value;
     return this;
   }
@@ -136,15 +136,15 @@ class HaSeul<T = any> {
    * Create an error handler which matches all commands
    * @param middleware Middleware that will be executed in order whenever an error is caught by the router
    */
-  error(...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
+  error(...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
 
   /**
    * Create an error handler which matches commands
    * @param url The command that must be matched in order for this route to be executed
    * @param middleware Middleware that will be executed in order whenever an error is caught by the router
    */
-  error(url: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
-  error(x: any, ...y: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T> {
+  error(url: string, ...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
+  error(x: any, ...y: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message> {
     return this.createRoute('error', x, ...y);
   }
 
@@ -152,15 +152,15 @@ class HaSeul<T = any> {
    * Create a handler which matches all commands
    * @param middleware Middleware that will be executed in order whenever the route is executed
    */
-  command(...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
+  command(...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
 
   /**
    * Create a handler which matches commands
    * @param url The command that must be matched in order for this route to be executed
    * @param middleware Middleware that will be executed in order whenever the route is executed
    */
-  command(url: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
-  command(x: any, ...y: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T> {
+  command(url: string, ...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
+  command(x: any, ...y: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message> {
     return this.createRoute('command', x, ...y);
   }
 
@@ -170,7 +170,7 @@ class HaSeul<T = any> {
    * @param middleware Middleware that will be executed in order whenever the route is executed
    * @private
    */
-  createRoute(routeType: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
+  createRoute(routeType: string, ...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
 
   /**
    * Create a handler which matches a command
@@ -179,9 +179,9 @@ class HaSeul<T = any> {
    * @param middleware Middleware that will be executed in order whenever the route is executed
    * @private
    */
-  createRoute(routeType: string, url: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
-  createRoute(routeType: string, x: any, ...y: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T> {
-    const middlewares: (HaSeul<T> | HaSeulCallbackFunction<T>)[] = [];
+  createRoute(routeType: string, url: string, ...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
+  createRoute(routeType: string, x: any, ...y: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message> {
+    const middlewares: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[] = [];
     let url = null;
     
     if (typeof x === 'function') {
@@ -214,7 +214,7 @@ class HaSeul<T = any> {
    * @param userInput The content of a message from a user
    * @param message The object from your client API that you would like to pass around to routers and middleware
    */
-  route(userInput: string, message: T): Promise<void>;
+  route(userInput: string, message: Message): Promise<void>;
 
   /**
    * Pass a message into the router, and define a starting point for where the router should look at.
@@ -224,8 +224,8 @@ class HaSeul<T = any> {
    * @param routeNumber The route number - Refers to the route to look at in the routes array.
    * @param middlewareNumber The middleware number - Refers to the middleware array found in each route.
    */
-  route(userInput: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void>;
-  route(userInput: string, message: T, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
+  route(userInput: string, message: Message, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void>;
+  route(userInput: string, message: Message, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
     return new Promise((resolve) => {
       let req: request;
       let i = 0;
