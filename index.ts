@@ -26,11 +26,11 @@ type HaSeulCallbackFunction<T> = ({
   req: request,
 }) => void
 
-class Router<T = any> {
+class HaSeul<T = any> {
   private routes: {
     type: string,
     url: string | null,
-    middlewares: (Router<T> | HaSeulCallbackFunction<T>)[]
+    middlewares: (HaSeul<T> | HaSeulCallbackFunction<T>)[]
   }[];
 
   private settings: {
@@ -78,14 +78,14 @@ class Router<T = any> {
    * @param option `prefix`
    * @param value The prefix that the router should react to.
    */
-  set(option: 'prefix', value: string): Router<T>
+  set(option: 'prefix', value: string): HaSeul<T>
 
   /**
    * Set the case sensitivity of routing.
    * @param option `case sensitive routing`
    * @param value Whether or not the router should be case sensitive or not.
    */
-  set(option: 'case sensitive routing', value: boolean): Router<T>
+  set(option: 'case sensitive routing', value: boolean): HaSeul<T>
 
   /**
    * Set the white space that is used when converting an object to JSON.
@@ -93,7 +93,7 @@ class Router<T = any> {
    * @param value A number for the number of spaces to indent JSON objects by, or a string to use as the indenting character.
    * @beta
    */
-  set(option: 'json spaces', value: string | number): Router<T>
+  set(option: 'json spaces', value: string | number): HaSeul<T>
 
   /**
    * Sets the value of `option` to `value`.
@@ -101,7 +101,7 @@ class Router<T = any> {
    * @param option The name of the option
    * @param value The value that will be assigned to this option
    */
-  set(option: string, value: any): Router<T> {
+  set(option: string, value: any): HaSeul<T> {
     this.settings[option] = value;
     return this;
   }
@@ -136,15 +136,15 @@ class Router<T = any> {
    * Create an error handler which matches all commands
    * @param middleware Middleware that will be executed in order whenever an error is caught by the router
    */
-  error(...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  error(...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
 
   /**
    * Create an error handler which matches commands
    * @param url The command that must be matched in order for this route to be executed
    * @param middleware Middleware that will be executed in order whenever an error is caught by the router
    */
-  error(url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
-  error(x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
+  error(url: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
+  error(x: any, ...y: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T> {
     return this.createRoute('error', x, ...y);
   }
 
@@ -152,15 +152,15 @@ class Router<T = any> {
    * Create a handler which matches all commands
    * @param middleware Middleware that will be executed in order whenever the route is executed
    */
-  command(...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  command(...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
 
   /**
    * Create a handler which matches commands
    * @param url The command that must be matched in order for this route to be executed
    * @param middleware Middleware that will be executed in order whenever the route is executed
    */
-  command(url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
-  command(x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
+  command(url: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
+  command(x: any, ...y: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T> {
     return this.createRoute('command', x, ...y);
   }
 
@@ -170,7 +170,7 @@ class Router<T = any> {
    * @param middleware Middleware that will be executed in order whenever the route is executed
    * @private
    */
-  createRoute(routeType: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
+  createRoute(routeType: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
 
   /**
    * Create a handler which matches a command
@@ -179,14 +179,14 @@ class Router<T = any> {
    * @param middleware Middleware that will be executed in order whenever the route is executed
    * @private
    */
-  createRoute(routeType: string, url: string, ...middleware: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T>;
-  createRoute(routeType: string, x: any, ...y: (Router<T> | HaSeulCallbackFunction<T>)[]): Router<T> {
-    const middlewares: (Router<T> | HaSeulCallbackFunction<T>)[] = [];
+  createRoute(routeType: string, url: string, ...middleware: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T>;
+  createRoute(routeType: string, x: any, ...y: (HaSeul<T> | HaSeulCallbackFunction<T>)[]): HaSeul<T> {
+    const middlewares: (HaSeul<T> | HaSeulCallbackFunction<T>)[] = [];
     let url = null;
     
     if (typeof x === 'function') {
       middlewares.push(x);
-    } else if (x instanceof Router) {
+    } else if (x instanceof HaSeul) {
       middlewares.push(x);
     } else if (typeof x === 'string') {
       url = x;
@@ -199,7 +199,7 @@ class Router<T = any> {
       url,
       middlewares: middlewares
         .map((middleware) => {
-          if (middleware instanceof Router) {
+          if (middleware instanceof HaSeul) {
             middleware.set('prefix', '')
           }
 
@@ -300,7 +300,7 @@ class Router<T = any> {
               }
             }
           })
-        } else if (middleware instanceof Router) {
+        } else if (middleware instanceof HaSeul) {
           // Do the middleware.
           middleware.route(content, message, req)
             .then(() => {
@@ -319,4 +319,4 @@ class Router<T = any> {
   }
 }
 
-export default Router;
+export default HaSeul;
