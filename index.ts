@@ -134,12 +134,27 @@ class HaSeul<Message = any> {
 
   /**
    * Create an error handler which matches all commands
+   * 
+   * You can set up the handler by placing it at the bottom to catch all errors which are created by routers.
+   * ```typescript
+   * const router = new HaSeul<Message>();
+   * 
+   * router
+   *  .command('help', ({ next }) => {
+   *    next(new Error('An error occured while processing the HELP command!'))
+   *  })
+   *  .error(({ err, message }) => {
+   *    console.log(err)
+   *    message.channel.createMessage('An error occurred: ' + err)
+   *  })
+   * ```
+   * 
    * @param middleware Middleware that will be executed in order whenever an error is caught by the router
    */
   error(...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
 
   /**
-   * Create an error handler which matches commands
+   * Create an error handler which matches a command
    * @param url The command that must be matched in order for this route to be executed
    * @param middleware Middleware that will be executed in order whenever an error is caught by the router
    */
@@ -155,7 +170,7 @@ class HaSeul<Message = any> {
   command(...middleware: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message>;
 
   /**
-   * Create a handler which matches commands
+   * Create a handler which matches a command
    * @param url The command that must be matched in order for this route to be executed
    * @param middleware Middleware that will be executed in order whenever the route is executed
    */
