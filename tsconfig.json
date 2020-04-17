@@ -69,6 +69,7 @@
       "index.ts"
     ],
     "excludePrivate": true,
-    "name": "HaSeul"
+    "name": "HaSeul",
+    "media": "media"
   }
 }

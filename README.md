@@ -1,144 +1,105 @@
-# HaSeul
-Express style bot framework
+# HaSeul Bot Framework
+A Node.js command handler, inspired by Express.js
 
-## Installation
-```bash
-yarn add haseul
-# npm i --save haseul
-```
+`npm install --add haseul`
 
-## Usage
-
-### new HaSeul();
-Creates a new router.
-
-```js
-// Old `require()` style imports
-const HaSeul = require('haseul').default;
-
-// New ES6 imports
-import HaSeul from 'haseul';
-
-// Create a new HaSeul.
-const router = new HaSeul();
-```
-
-### router.route(content, message)
-Executes the router.
-Pass in the raw message next, and pass in the object.
-
-### router.set(name, value)
-Sets the setting `name` as `value`.
-You can store anything you like, but some control the behaviour of the server.
-
-name                   | default value | action
----------------------- | ------------- | -------------
-prefix                 | ''            | Sets the prefix of the router
-case sensitive routing | false         | If true, enables case sensitivity
-json spaces            | 2             | Unused
-
-### router.command([command, ] middleware [, middleware ...])
-Creates a command.
-The command executes if the user's text matches `command`, or if `command` is empty.
-
-The callback is given an object with the following properties:
-
-name    | description
-------- | -----------
-message | The original object handed in from `router.route(content, message)`
-next    | A function which executes the next available command. Use `next(error)` to pass an error to the next available `route.error` handler.
-content | The part of the original message without the prefix and command.
-
-### router.error([command, ] middleware [, middleware ...])
-Creates an error handler.
-The error executes if the user's text matches `command`, or if `command` is empty.
-
-The callback is given an object with the following properties:
-
-name    | description
-------- | -----------
-message | The original object handed in from `router.route(content, message)`
-err     | The error passed in.
-next    | A function which executes the next available command. Use `next(error)` to pass an error to the next available `route.error` handler.
-content | The part of the original message without the prefix and command.
-
-## Example with Eris
-```js
-import Eris from 'eris';
-import HaSeul from 'haseul';
-
-const bot = new Eris('token')
-const router = new HaSeul();
-const deeperRouter = new HaSeul();
-
-bot.on('messageCreate', (message) => {
-  router.route(message.content, message);
-})
-
-router
-  .set('prefix', 'vivi')
-  .set('case sensitive routing', true)
-  .set('json spaces', 2)
-  .command('hyunjin', ({message, content}) => {
-    message.channel.createMessage(`This is the HyunJin command. Your input was\n${content}`)
-  })
-  .command('yves', ({message}) => {
-    message.channel.createMessage('This is the lower-case Yves command');
-  })
-  .command('Yves', ({message}) => {
-    message.channel.createMessage('This is the upper-case Yves command');
-  })
-  .command('yeojin', ({message}) => {
-    message.channel.createMessage('This is the YeoJin command');
-  }, ({message}) => {
-    message.channel.createMessage('Since next(); is not ran, this should not print');
-  })
-  .command('kimlip', ({next}) => {
-    next(new Error('The Kim Lip command failed!'))
-  }, ({message}) => {
-    message.channel.createMessage('Since next(); is ran, but contains an error, this should not print');
-  })
-  .command('chuu', ({message, next}) => {
-    message.channel.createMessage('This is the Chuu command')
-      .then(() => {
-        next();
-      })
-  }, ({message}) => {
-    message.channel.createMessage('Since next(); is ran, this should print');
-  })
-  .command('heejin', deeperRouter)
-  .error(({message, err}) => {
-    message.channel.createMessage(`Oops! The following error occurred:\n${err.message}`)
-  })
-
-deeperRouter
-  // Place potential collisions `heejin` with `heejin tears` below.
-  .command('tears', ({message}) => {
-    message.channel.createMessage('This is the HeeJin command, with tears as a subcommand');
-  })
-  .command('', ({message}) => {
-    message.channel.createMessage('This is the HeeJin command');
-  })
-```
-
-### Screenshots
-
-Obtaining the content of messages  
-![This is the HyunJin command. Your input was: stan loona](.github/hyunjin.png)
-
-Case sensitivity with `router.set('case sensitive routing', true)`  
-![yves compared to Yves](.github/yves.png)
-
-Usage of `next()` within middleware  
-![next()](.github/next.png)
-
-Subcommands using nested routers  
-![heejintears](.github/heejintears.png)
+![](https://cdn.discordapp.com/attachments/482760649236021248/694738499450044416/EUdkObAUYAAod0v.jpg)
 
 ## Links
+- [Documentation](https://haseul.leondrolio.com/)
 - [npm](https://www.npmjs.com/package/haseul)
 - [ViVi](https://github.com/botsto/vivi)
 
 ## Notes
 - [You may be interested in this music video](https://www.youtube.com/watch?v=6a4BWpBJppI)
 - This project is licenced under the MIT licence
+
+## Getting Started
+### Importing
+In order to use HaSeul, you can either use CommonJS to import HaSeul, or use ES6 modules.
+```javascript
+// CommonJS
+const HaSeul = require('haseul').default;
+
+// ES6
+import Haseul from 'haseul';
+```
+
+## Creating a Router
+You can then create a new instance of HaSeul.
+```javascript
+const router = new HaSeul();
+```
+
+## TypeScript
+If you're combining HaSeul with other libraries such as Eris or Discord.js, you may want to pass the Message class as a type into HaSeul.
+```typescript
+import { Message } from 'eris';
+import HaSeul from 'haseul';
+
+const router = new HaSeul<Message>();
+```
+
+This allows for better type information.
+
+![](media/intellisense.png)
+
+## Examples
+### JavaScript Discord.js Example
+```javascript
+const Discord = require('discord.js');
+const HaSeul = require('haseul').default;
+
+const client = new Discord.Client();
+const router = new HaSeul();
+let counter = 0;
+
+// When a message arrives...
+client.on('message', (message) => {
+  // Put it through the HaSeul routing engine.
+  router.route(message.content, message);
+});
+
+// Define the routes that HaSeul will handle
+router
+  .command('help', ({ message }) => {
+    message.reply('You ran the help command!');
+  })
+  .command('counter', ({ message }) => {
+    counter += 1;
+    message.reply(`This command has been ran ${counter} times!`);
+  })
+
+client.login('token');
+```
+
+### TypeScript Eris Error Handling Example
+```typescript
+import { Client as Eris, Message } from 'eris';
+import HaSeul from 'haseul';
+
+const client = new Eris('token');
+const router = new HaSeul<Message>();
+
+// When a message arrives...
+client.on('message', (message) => {
+  // Put it through the HaSeul routing engine.
+  router.route(message.content, message);
+});
+
+// Define the routes that HaSeul will handle
+router
+  .command('yeojin', ({ next }) => {
+    try {
+      // Do something that causes an error!
+    } catch(e) {
+      // Throw the error into the `next` function
+      next(e);
+    }
+  })
+  .error(({ err, message }) => {
+    message.channel.createMessage('An error occurred while processing your request: ' + err.stack)
+  })
+
+client.connect();
+```
