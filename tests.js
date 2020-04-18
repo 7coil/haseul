@@ -45,3 +45,32 @@ router2
 router2.route('discordmailtest Test', {weird: 'object'})
 router2.route('discordmailtest')
 router2.route('discordmailtest a')
+
+const router = new HaSeul();
+
+router
+  .command('hello', () => {
+    console.log('Hello world!')
+  })
+  .command('dogs', () => {
+    console.log('Dogs!')
+  })
+  .command('cats', () => {
+    console.log('Cats!')
+  })
+
+// The following prints out "Hello world!", as the inputs begin with "hello"
+// Note that a space is not required after the command.
+router.route('hello');
+router.route('hello loonatheworld!');
+router.route('helloloonatheworld!');
+
+// The following prints out "Dogs!", as the inputs begin with "dogs"
+router.route('dogs');
+router.route('dogs rule!');
+router.route('dogs are cool!');
+
+// The following prints out "Cats!", as the inputs begin with "cats"
+// Note that the capitalisation of a command does not affect whether or not the command is called or not.
+router.route('cats the movie is good');
+router.route('CATS surround hyunjin');

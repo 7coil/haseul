@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "devDependencies": {
-    "typedoc": "^0.17.4",
+    "typedoc": "^0.16.11",
+    "typedoc-plugin-pages": "^1.0.0",
     "typescript": "^3.8.3"
   },
   "scripts": {

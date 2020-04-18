@@ -63,13 +63,68 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
   "typedocOptions": {
-    "mode": "file",
+    "mode": "module",
     "out": "docs",
     "inputFiles": [
       "index.ts"
     ],
     "excludePrivate": true,
     "name": "HaSeul Bot Framework",
-    "media": "media"
+    "media": "media",
+    "theme": "pages-plugin",
+    "readme": "./docs-source/README.md",
+    "pages": {
+      "source": "./docs-source",
+      "groups": [
+        {
+          "title": "Getting Started",
+          "source": "./getting-started",
+          "pages": [
+            {
+              "title": "Installation",
+              "source": "./installation.md"
+            },
+            {
+              "title": "Hello World!",
+              "source": "./hello-world.md"
+            },
+            {
+              "title": "Prefix",
+              "source": "./prefix.md"
+            },
+            {
+              "title": "User Input",
+              "source": "./user-input.md"
+            },
+            {
+              "title": "Third Party Integration",
+              "source": "./third-party.md"
+            }
+          ]
+        },
+        {
+          "title": "Integration Examples",
+          "source": "./integration",
+          "pages": [
+            {
+              "title": "Discord.js",
+              "source": "./discordjs.md"
+            },
+            {
+              "title": "Eris",
+              "source": "./eris.md"
+            },
+            {
+              "title": "Eris with TypeScript",
+              "source": "./eris-with-typescript.md"
+            }
+          ]
+        }
+      ],
+      "replaceGlobalsPage": true,
+      "reflectionNavigationTitle": "Development API",
+      "separatePluginNavigation": true,
+      "output": "pages"
+    }
   }
 }
