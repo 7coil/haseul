@@ -119,6 +119,16 @@
               "source": "./eris-with-typescript.md"
             }
           ]
+        },
+        {
+          "title": "Topics",
+          "source": "./topics",
+          "pages": [
+            {
+              "title": "Error Handling",
+              "source": "./error.md"
+            }
+          ]
         }
       ],
       "replaceGlobalsPage": true,
