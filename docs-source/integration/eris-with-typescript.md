@@ -24,3 +24,5 @@ client.on('message', (message) => {
 
 client.connect();
 ```
+
+![Visual Studio Code displaying available methods via Intellisense](/media/intellisense.png)
