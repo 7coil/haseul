@@ -288,33 +288,45 @@ class HaSeul<Message = any> {
         const middleware = route.middlewares[j];
         
         if (typeof middleware === 'function') {
-          middleware({
-            message,
-            req,
-            err: req.err,
-            content,
-            next: (err?: Error): void => {
-              if (err) {
-                req.err = err;
-
-                // If this is an error router, go to deeper middleware
-                if (route.type === 'error') {
-                  resolve(this.route(userInput, message, req, i, j + 1))
+          try {
+            middleware({
+              message,
+              req,
+              err: req.err,
+              content,
+              next: (err?: Error): void => {
+                if (err) {
+                  req.err = err;
+  
+                  // If this is an error router, go to deeper middleware
+                  if (route.type === 'error') {
+                    resolve(this.route(userInput, message, req, i, j + 1))
+                  } else {
+                    // Otherwise, go to the next route in search for an error router.
+                    resolve(this.route(userInput, message, req, i + 1, 0))
+                  }
                 } else {
-                  // Otherwise, go to the next route in search for an error router.
-                  resolve(this.route(userInput, message, req, i + 1, 0))
-                }
-              } else {
-                // If this is an error router, skip this route
-                if (route.type === 'error') {
-                  resolve(this.route(userInput, message, req, i + 1, 0))
-                } else {
-                  // Otherwise, go to deeper middleware
-                  resolve(this.route(userInput, message, req, i, j + 1))
+                  // If this is an error router, skip this route
+                  if (route.type === 'error') {
+                    resolve(this.route(userInput, message, req, i + 1, 0))
+                  } else {
+                    // Otherwise, go to deeper middleware
+                    resolve(this.route(userInput, message, req, i, j + 1))
+                  }
                 }
               }
+            })
+          } catch(err) {
+            req.err = err;
+
+            // If this is an error router, go to deeper middleware
+            if (route.type === 'error') {
+              resolve(this.route(userInput, message, req, i, j + 1))
+            } else {
+              // Otherwise, go to the next route in search for an error router.
+              resolve(this.route(userInput, message, req, i + 1, 0))
             }
-          })
+          }
         } else if (middleware instanceof HaSeul) {
           // Do the middleware.
           middleware.route(content, message, req)

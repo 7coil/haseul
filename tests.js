@@ -74,3 +74,15 @@ router.route('dogs are cool!');
 // Note that the capitalisation of a command does not affect whether or not the command is called or not.
 router.route('cats the movie is good');
 router.route('CATS surround hyunjin');
+
+const errorRouter = new HaSeul();
+
+errorRouter
+  .command('test', () => {
+    throw new Error('This is an error!');
+  })
+  .error(({ err }) => {
+    console.log('The following error was caught by Node.js', err)
+  })
+
+errorRouter.route('test error')
