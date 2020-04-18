@@ -7,6 +7,7 @@ A Node.js command handler, inspired by Express.js
 
 ## Links
 - [Documentation](https://haseul.leondrolio.com/)
+- [Discord Server](https://discordapp.com/invite/wHgdmf4)
 - [npm](https://www.npmjs.com/package/haseul)
 - [ViVi](https://github.com/botsto/vivi)
 
