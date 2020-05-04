@@ -28,7 +28,7 @@ router1.route('haseul nested sas')
 const router2 = new HaSeul();
 
 router2
-  .set('prefix', 'discordmail')
+  .set('prefix', ['discordmail', 'dmail'])
   .set('case sensitive routing', false)
   .set('json spaces', 2)
   .command(({message, next, req}) => {
@@ -45,6 +45,9 @@ router2
 router2.route('discordmailtest Test', {weird: 'object'})
 router2.route('discordmailtest')
 router2.route('discordmailtest a')
+router2.route('dmailtest a')
+router2.route('dmailtest This is a test!')
+router2.route('notdmailtest This is a test!')
 
 const router = new HaSeul();
 

@@ -34,7 +34,7 @@ class HaSeul<Message = any> {
   }[];
 
   private settings: {
-    prefix?: string,
+    prefix?: string[],
     'json spaces'?: string | number,
     'case sensitive routing'?: boolean,
     [key: string]: any
@@ -43,7 +43,7 @@ class HaSeul<Message = any> {
   constructor() {
     this.routes = [];
     this.settings = {
-      prefix: '',
+      prefix: [],
       'json spaces': 2,
       'case sensitive routing': false
     };
@@ -56,12 +56,28 @@ class HaSeul<Message = any> {
    */
   getContentIfMatched(content: string, route: string | null): string | void {
     const contentToCheck = this.get('case sensitive routing') ? content.trim() : content.toLowerCase().trim();
-    const prefixToCheck = this.get('case sensitive routing') ? this.get('prefix') : this.get('prefix').toLowerCase();
+    const prefixes = this.get('prefix');
 
-    // If the content doesn't start with the prefix, ignore.
-    if (prefixToCheck.length && !contentToCheck.startsWith(prefixToCheck)) return;
-    const contentWithoutPrefix = content.trim().substring(prefixToCheck.length).trim();
-    const contentWithoutPrefixToCheck = contentToCheck.substring(prefixToCheck.length).trim();
+    let contentWithoutPrefix = content.trim();
+    let contentWithoutPrefixToCheck = contentToCheck.trim();
+
+    if (prefixes.length > 0) {
+      let found = false;
+      for (const prefix of this.get('prefix')) {
+        const prefixToCheck = this.get('case sensitive routing') ? prefix : prefix.toLowerCase();
+  
+        // If the content doesn't start with the prefix, ignore.
+        if (contentToCheck.startsWith(prefixToCheck)) {
+          found = true;
+          contentWithoutPrefix = content.trim().substring(prefixToCheck.length).trim();
+          contentWithoutPrefixToCheck = contentToCheck.substring(prefixToCheck.length).trim();
+
+          break;
+        }
+      }
+
+      if (!found) return;
+    }
 
     // If a route isn't specified, just send the content without the prefix.
     if (route === null) return contentWithoutPrefix;
@@ -74,9 +90,17 @@ class HaSeul<Message = any> {
   }
 
   /**
-   * Set the prefix of the router.
+   * Set the prefixes the router will respond to.
    * @param option `prefix`
    * @param value The prefix that the router should react to.
+   */
+  set(option: 'prefix', value: string[]): HaSeul<Message>
+
+  /**
+   * Set the prefix of the router.
+   * @deprecated Please use an array of strings instead.
+   * @param option `prefix`
+   * @param value The prefixes that the router should react to.
    */
   set(option: 'prefix', value: string): HaSeul<Message>
 
@@ -102,6 +126,8 @@ class HaSeul<Message = any> {
    * @param value The value that will be assigned to this option
    */
   set(option: string, value: any): HaSeul<Message> {
+    // TODO: Remove this line soon
+    if (option === 'prefix' && typeof value === 'string') value = [value];
     this.settings[option] = value;
     return this;
   }
@@ -110,7 +136,7 @@ class HaSeul<Message = any> {
    * Obtain the current prefix of the router.
    * @param option `prefix`
    */
-  get(option: 'prefix'): string
+  get(option: 'prefix'): string[]
 
   /**
    * Obtain whether or not the router is case sensitive or not.
@@ -215,7 +241,7 @@ class HaSeul<Message = any> {
       middlewares: middlewares
         .map((middleware) => {
           if (middleware instanceof HaSeul) {
-            middleware.set('prefix', '')
+            middleware.set('prefix', [])
           }
 
           return middleware
