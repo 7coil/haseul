@@ -72,7 +72,7 @@
     "name": "HaSeul Bot Framework",
     "media": "media",
     "theme": "pages-plugin",
-    "readme": "./docs-source/README.md",
+    "readme": "./README.md",
     "pages": {
       "source": "./docs-source",
       "groups": [

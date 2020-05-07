@@ -6,6 +6,7 @@ A Node.js command handler, inspired by Express.js
 ![](https://cdn.discordapp.com/attachments/482760649236021248/694738499450044416/EUdkObAUYAAod0v.jpg)
 
 ## Links
+- [GitHub](https://github.com/7coil/haseul)
 - [Documentation](https://haseul.leondrolio.com/)
 - [Discord Server](https://discordapp.com/invite/wHgdmf4)
 - [npm](https://www.npmjs.com/package/haseul)
