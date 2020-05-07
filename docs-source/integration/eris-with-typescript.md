@@ -1,5 +1,4 @@
-By using TypeScript to enhance your JavaScript, you can access type information by passing the `Message` class of third party libraries into the HaSeul constructor.
-This allows some advanced editors (such as Visual Studio Code) to display methods that you can run on the message variable.
+You can use TypeScript to pass the `Message` type as a type parameter to HaSeul.
 
 ```typescript
 import { Client as Eris, Message } from 'eris';
@@ -13,7 +12,7 @@ client.on('ready', () => {
 });
 
 router
-  .set('prefix', '!')
+  .set('prefix', ['!'])
   .command('ping', ({ message }) => {
     message.channel.createMessage('pong!')
   })
@@ -25,4 +24,4 @@ client.on('message', (message) => {
 client.connect();
 ```
 
-![Visual Studio Code displaying available methods via Intellisense](media://intellisense.png)
+![](media://intellisense.png)

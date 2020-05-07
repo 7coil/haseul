@@ -107,6 +107,10 @@
           "source": "./integration",
           "pages": [
             {
+              "title": "Discord Mention Prefix",
+              "source": "./mentionable-discord.md"
+            },
+            {
               "title": "Discord.js",
               "source": "./discordjs.md"
             },
