@@ -131,6 +131,9 @@
             {
               "title": "Error Handling",
               "source": "./error.md"
+            }, {
+              "title": "Waiting for #route() to complete",
+              "source": "./promise.md"
             }
           ]
         }
