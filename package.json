@@ -5,13 +5,16 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "devDependencies": {
+    "mocha": "^8.0.1",
+    "sinon": "^9.0.2",
     "typedoc": "^0.17.6",
     "typedoc-plugin-pages": "^1.0.1",
     "typescript": "^3.8.3"
   },
   "scripts": {
     "build": "tsc",
-    "prepublish": "tsc"
+    "prepublish": "tsc",
+    "test": "mocha"
   },
   "homepage": "https://haseul.leondrolio.com/",
   "repository": {
