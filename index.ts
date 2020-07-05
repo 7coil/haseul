@@ -12,16 +12,30 @@ interface request {
   locals: HaSeulLocals,
 }
 
+interface SearchResults {
+  prefix: string,
+  route: string | null,
+  content: string,
+}
+
 type HaSeulCallbackFunction<Message> = ({
   message,
+  userInput,
+  route,
   err,
   content,
+  prefix,
+  done,
   next,
   req
 }: {
-  message: Message,
+  userInput: string,
+  route: string | null,
+  message?: Message,
   err: Error | undefined,
   content: string,
+  prefix: string,
+  done: (err?: Error) => void,
   next: (err?: Error) => void,
   req: request,
 }) => void
@@ -54,10 +68,11 @@ class HaSeul<Message = any> {
    * @param content The message content that the user has provided
    * @param route The route name that needs to be removed from the resulting content
    */
-  getContentIfMatched(content: string, route: string | null): string | void {
+  getContentIfMatched(content: string, route: string | null): SearchResults | null {
     const contentToCheck = this.get('case sensitive routing') ? content.trim() : content.toLowerCase().trim();
     const prefixes = this.get('prefix');
 
+    let foundPrefix = '';
     let contentWithoutPrefix = content.trim();
     let contentWithoutPrefixToCheck = contentToCheck.trim();
 
@@ -65,10 +80,11 @@ class HaSeul<Message = any> {
       let found = false;
       for (const prefix of this.get('prefix')) {
         const prefixToCheck = this.get('case sensitive routing') ? prefix : prefix.toLowerCase();
-  
+
         // If the content doesn't start with the prefix, ignore.
         if (contentToCheck.startsWith(prefixToCheck)) {
           found = true;
+          foundPrefix = prefix;
           contentWithoutPrefix = content.trim().substring(prefixToCheck.length).trim();
           contentWithoutPrefixToCheck = contentToCheck.substring(prefixToCheck.length).trim();
 
@@ -76,17 +92,25 @@ class HaSeul<Message = any> {
         }
       }
 
-      if (!found) return;
+      if (!found) return null;
     }
 
-    // If a route isn't specified, just send the content without the prefix.
-    if (route === null) return contentWithoutPrefix;
+    // If a route isn't specified, just send the content
+    if (route === null) return {
+      prefix: foundPrefix,
+      route: null,
+      content: contentWithoutPrefix,
+    };
 
     // If the content doesn't start with the route, ignore.
     const routeToCheck = this.get('case sensitive routing') ? route.trim() : route.toLowerCase().trim();
-    if (!contentWithoutPrefixToCheck.startsWith(routeToCheck)) return;
+    if (!contentWithoutPrefixToCheck.startsWith(routeToCheck)) return null;
 
-    return contentWithoutPrefix.substring(routeToCheck.length).trim();
+    return {
+      prefix: foundPrefix,
+      route: route,
+      content: contentWithoutPrefix.substring(routeToCheck.length).trim(),
+    };
   }
 
   /**
@@ -224,7 +248,7 @@ class HaSeul<Message = any> {
   createRoute(routeType: string, x: any, ...y: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[]): HaSeul<Message> {
     const middlewares: (HaSeul<Message> | HaSeulCallbackFunction<Message>)[] = [];
     let url = null;
-    
+
     if (typeof x === 'function') {
       middlewares.push(x);
     } else if (x instanceof HaSeul) {
@@ -251,11 +275,16 @@ class HaSeul<Message = any> {
   }
 
   /**
-   * Pass a message into the router.
+   * Pass a message into the router
    * @param userInput The content of a message from a user
-   * @param message The object from your client API that you would like to pass around to routers and middleware
+   * @param message The object from your client API
    */
-  route(userInput: string, message: Message): Promise<void>;
+  route(userInput: string, message?: Message): Promise<any> {
+    return this.executeRouter({
+      userInput,
+      message
+    })
+  }
 
   /**
    * Pass a message into the router, and define a starting point for where the router should look at.
@@ -264,13 +293,23 @@ class HaSeul<Message = any> {
    * @param existingReq The request object
    * @param routeNumber The route number - Refers to the route to look at in the routes array.
    * @param middlewareNumber The middleware number - Refers to the middleware array found in each route.
+   * @private
    */
-  route(userInput: string, message: Message, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void>;
-  route(userInput: string, message: Message, existingReq?: request, routeNumber?: number, middlewareNumber?: number): Promise<void> {
+  private executeRouter({
+    userInput,
+    message,
+    existingReq,
+    routeNumber = 0,
+    middlewareNumber = 0,
+  }: {
+    userInput: string,
+    message?: Message,
+    existingReq?: request,
+    routeNumber?: number,
+    middlewareNumber?: number,
+  }): Promise<void> {
     return new Promise((resolve) => {
       let req: request;
-      let i = 0;
-      let j = 0;
 
       if (existingReq) {
         req = existingReq;
@@ -282,91 +321,124 @@ class HaSeul<Message = any> {
         }
       }
 
-      if (routeNumber) {
-        i = routeNumber;
-      }
-
-      if (middlewareNumber) {
-        j = middlewareNumber;
-      }
-
-      const route = this.routes[i];
+      const route = this.routes[routeNumber];
 
       // If a route was not found, we've ran out of routes.
       if (!route) resolve();
 
+      const nextRoute = () => {
+        resolve(this.executeRouter({
+          userInput,
+          message,
+          existingReq: req,
+          routeNumber: routeNumber + 1,
+        }));
+      }
+
+      const nextMiddleware = () => {
+        resolve(this.executeRouter({
+          userInput,
+          message,
+          existingReq: req,
+          routeNumber: routeNumber,
+          middlewareNumber: middlewareNumber + 1,
+        }));
+      }
+
       // If this route is not an error handler, go to the next route
       if (req.err && route.type !== 'error') {
-        resolve(this.route(userInput, message, req, i + 1, 0));
+        nextRoute()
         return;
       }
-      
+
       // If this route is an error handler, but there's no error, go to the next route
       if (!req.err && route.type === 'error') {
-        resolve(this.route(userInput, message, req, i + 1, 0));
+        nextRoute()
         return;
       }
 
-      const content = this.getContentIfMatched(userInput, route.url)
+      const match = this.getContentIfMatched(userInput, route.url)
 
       // If the route URL is matched, try to execute the middleware
-      if (typeof content === 'string') {
-        const middleware = route.middlewares[j];
-        
+      if (match && match.route) {
+        const middleware = route.middlewares[middlewareNumber];
+
         if (typeof middleware === 'function') {
           try {
             middleware({
+              userInput,
               message,
               req,
               err: req.err,
-              content,
+              route: route.url,
+              content: match.content,
+              prefix: match.prefix,
+              done: (err?: Error): void => {
+                if (err) {
+                  req.err = err;
+
+                  // If this is an error router, go to deeper middleware
+                  if (route.type === 'error') {
+                    nextMiddleware();
+                  } else {
+                    // Otherwise, go to the next route in search for an error router.
+                    nextRoute();
+                  }
+                } else {
+                  resolve()
+                }
+              },
               next: (err?: Error): void => {
                 if (err) {
                   req.err = err;
-  
+
                   // If this is an error router, go to deeper middleware
                   if (route.type === 'error') {
-                    resolve(this.route(userInput, message, req, i, j + 1))
+                    nextMiddleware();
                   } else {
                     // Otherwise, go to the next route in search for an error router.
-                    resolve(this.route(userInput, message, req, i + 1, 0))
+                    nextRoute();
                   }
                 } else {
                   // If this is an error router, skip this route
                   if (route.type === 'error') {
-                    resolve(this.route(userInput, message, req, i + 1, 0))
+                    nextRoute();
                   } else {
                     // Otherwise, go to deeper middleware
-                    resolve(this.route(userInput, message, req, i, j + 1))
+                    nextMiddleware()
                   }
                 }
               }
             })
-          } catch(err) {
+          } catch (err) {
             req.err = err;
 
             // If this is an error router, go to deeper middleware
             if (route.type === 'error') {
-              resolve(this.route(userInput, message, req, i, j + 1))
+              nextMiddleware();
             } else {
               // Otherwise, go to the next route in search for an error router.
-              resolve(this.route(userInput, message, req, i + 1, 0))
+              nextRoute();
             }
           }
         } else if (middleware instanceof HaSeul) {
           // Do the middleware.
-          middleware.route(content, message, req)
+          middleware.executeRouter({
+            userInput: match.content,
+            message,
+            existingReq: req,
+          })
             .then(() => {
               // After routing, go to the next middleware
-              resolve(this.route(userInput, message, req, i, j + 1))
+              nextMiddleware();
             })
         } else {
           // There is no more middleware. Go to the next router.
-          resolve(this.route(userInput, message, req, i + 1, 0))
+          nextRoute();
         }
       } else {
         // The route didn't match. Go to the next router.
-        resolve(this.route(userInput, message, req, i + 1, 0))
+        nextRoute();
       }
     });
   }
