@@ -4,7 +4,7 @@ interface HaSeulLocals {
   [key: number]: any;
 }
 
-interface request {
+interface HaSeulRequest {
   err?: Error,
   originalContent: string,
   originalUrl: string,
@@ -12,7 +12,7 @@ interface request {
   locals: HaSeulLocals,
 }
 
-interface SearchResults {
+interface HaSeulSearchResults {
   prefix: string,
   route: string | null,
   content: string,
@@ -37,7 +37,7 @@ type HaSeulCallbackFunction<Message> = ({
   prefix: string,
   done: (err?: Error) => void,
   next: (err?: Error) => void,
-  req: request,
+  req: HaSeulRequest,
 }) => void
 
 class HaSeul<Message = any> {
@@ -68,7 +68,7 @@ class HaSeul<Message = any> {
    * @param content The message content that the user has provided
    * @param route The route name that needs to be removed from the resulting content
    */
-  getContentIfMatched(content: string, route: string | null): SearchResults | null {
+  getContentIfMatched(content: string, route: string | null): HaSeulSearchResults | null {
     const contentToCheck = this.get('case sensitive routing') ? content.trim() : content.toLowerCase().trim();
     const prefixes = this.get('prefix');
 
@@ -76,7 +76,7 @@ class HaSeul<Message = any> {
     let contentWithoutPrefix = content.trim();
     let contentWithoutPrefixToCheck = contentToCheck.trim();
 
-    if (prefixes.length > 0) {
+    if (prefixes.length > 0 && prefixes.every(prefix => prefix !== '')) {
       let found = false;
       for (const prefix of this.get('prefix')) {
         const prefixToCheck = this.get('case sensitive routing') ? prefix : prefix.toLowerCase();
@@ -304,12 +304,12 @@ class HaSeul<Message = any> {
   }: {
     userInput: string,
     message?: Message,
-    existingReq?: request,
+    existingReq?: HaSeulRequest,
     routeNumber?: number,
     middlewareNumber?: number,
   }): Promise<void> {
     return new Promise((resolve) => {
-      let req: request;
+      let req: HaSeulRequest;
 
       if (existingReq) {
         req = existingReq;
@@ -359,8 +359,8 @@ class HaSeul<Message = any> {
 
       const match = this.getContentIfMatched(userInput, route.url)
 
-      // If the route URL is matched, try to execute the middleware
-      if (match && match.route) {
+      // If the route is matched, try to execute the middleware
+      if (match) {
         const middleware = route.middlewares[middlewareNumber];
 
         if (typeof middleware === 'function') {

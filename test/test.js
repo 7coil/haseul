@@ -1,6 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon')
 const HaSeul = require('../dist/index').default;
+const fs = require('fs')
 
 describe('HaSeul', function () {
   describe('#set()', function () {
@@ -273,6 +274,75 @@ describe('HaSeul', function () {
 
         it('has content of "framework"', function () {
           sinon.assert.calledWith(spy, sinon.match.has('content', 'framework'))
+        })
+      })
+    })
+    describe('nested routing', function () {
+      const router = new HaSeul();
+      const deeperRouter = new HaSeul();
+
+      let spy = sinon.spy();
+
+      router
+        .set('prefix', ['haseul', 'yeojin'])
+        .command('second', deeperRouter)
+
+      deeperRouter
+        .command('bot', (args) => { spy(args); args.done() })
+        .command('vivi', (args) => { spy(args); args.done() })
+        .command((args) => { spy(args); args.done() })
+
+      describe('"yeojinsecond"', function () {
+        before(function () {
+          return router.route('yeojinsecond')
+        })
+
+        after(function () {
+          spy.resetHistory()
+        })
+
+        it('calls the default function', function () {
+          sinon.assert.calledWith(spy, sinon.match.has('route', null))
+        })
+
+        it('has content of empty string', function () {
+          sinon.assert.calledWith(spy, sinon.match.has('content', ''))
+        })
+      })
+
+      describe('"yeojinsecondbot"', function () {
+        before(function () {
+          return router.route('yeojinsecondbot')
+        })
+
+        after(function () {
+          spy.resetHistory()
+        })
+
+        it('calls the "bot" function', function () {
+          sinon.assert.calledWith(spy, sinon.match.has('route', 'bot'))
+        })
+
+        it('has content of empty string', function () {
+          sinon.assert.calledWith(spy, sinon.match.has('content', ''))
+        })
+      })
+
+      describe('"yeojinsecondvivi"', function () {
+        before(function () {
+          return router.route('yeojinsecondvivi')
+        })
+
+        after(function () {
+          spy.resetHistory()
+        })
+
+        it('calls the "vivi" function', function () {
+          sinon.assert.calledWith(spy, sinon.match.has('route', 'vivi'))
+        })
+
+        it('has content of empty string', function () {
+          sinon.assert.calledWith(spy, sinon.match.has('content', ''))
         })
       })
     })
