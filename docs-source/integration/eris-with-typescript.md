@@ -17,7 +17,7 @@ router
     message.channel.createMessage('pong!')
   })
 
-client.on('message', (message) => {
+client.on('messageCreate', (message) => {
   router.route(message.content, message);
 });
 
